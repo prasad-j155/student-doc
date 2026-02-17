@@ -115,10 +115,10 @@ def generate_pdf(data):
     pdf.set_auto_page_break(auto=True, margin=15)
     
     # I. PERSONAL INFORMATION
-    pdf.set_font('Arial', 'B', 12)
+    pdf.set_font('Arial', 'B', 10)
     pdf.cell(0, 10, 'I. PERSONAL INFORMATION', 0, 1)
     
-    pdf.set_font('Arial', '', 11)
+    pdf.set_font('Arial', '', 9)
     # Notice we wrap everything in clean_text() now
     fields = [
         ("Name of Student", clean_text(data.get('Name', ''))),
@@ -130,24 +130,24 @@ def generate_pdf(data):
     ]
     
     for label, value in fields:
-        pdf.set_font('Arial', 'B', 11)
+        pdf.set_font('Arial', 'B', 9)
         pdf.cell(60, 8, f"{label}:", 0, 0)
-        pdf.set_font('Arial', '', 11)
+        pdf.set_font('Arial', '', 9)
         pdf.multi_cell(0, 8, str(value))
 
     pdf.ln(5)
 
     # II. ACADEMIC PERFORMANCE
-    pdf.set_font('Arial', 'B', 12)
+    pdf.set_font('Arial', 'B', 10)
     pdf.cell(0, 10, 'II. ACADEMIC PERFORMANCE', 0, 1)
     
-    pdf.set_font('Arial', 'B', 10)
+    pdf.set_font('Arial', 'B', 8)
     pdf.set_fill_color(240, 240, 240)
     pdf.cell(40, 10, 'Semester', 1, 0, 'C', 1)
     pdf.cell(60, 10, '% Marks / SGPA', 1, 0, 'C', 1)
     pdf.cell(90, 10, 'Remark', 1, 1, 'C', 1)
     
-    pdf.set_font('Arial', '', 10)
+    pdf.set_font('Arial', '', 8)
     sems = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII']
     
     for sem in sems:
@@ -162,7 +162,7 @@ def generate_pdf(data):
     pdf.ln(5)
 
     # III. ACTIVITY & ACHIEVEMENT RECORD
-    pdf.set_font('Arial', 'B', 12)
+    pdf.set_font('Arial', 'B', 10)
     pdf.cell(0, 10, 'III. ACTIVITY & ACHIEVEMENT RECORD', 0, 1)
     
     activities = [
@@ -174,11 +174,11 @@ def generate_pdf(data):
     ]
 
     for title, subtitle, content in activities:
-        pdf.set_font('Arial', 'B', 11)
+        pdf.set_font('Arial', 'B', 9)
         pdf.cell(0, 6, title, 0, 1)
-        pdf.set_font('Arial', 'I', 9)
+        pdf.set_font('Arial', 'I', 7)
         pdf.cell(0, 5, subtitle, 0, 1)
-        pdf.set_font('Arial', '', 10)
+        pdf.set_font('Arial', '', 8)
         pdf.multi_cell(0, 6, str(content) + "\n", 'B') 
         pdf.ln(3)
 
