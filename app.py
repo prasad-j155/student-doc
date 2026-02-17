@@ -78,23 +78,55 @@ class PDF(FPDF):
         self.cell(0, 10, 'STUDENT PROFILE & ACTIVITY RECORD', 0, 1, 'C') # [Source: 1]
         self.ln(5)
 
+
+def clean_text(text):
+    """
+    Fixes the Unicode error by replacing incompatible characters.
+    - Converts None to empty string
+    - Replaces smart quotes and dashes from Word
+    - Removes emojis or unknown chars
+    """
+    if text is None:
+        return ""
+    text = str(text)
+    
+    # Replace common "smart" characters from Word/Docs
+    replacements = {
+        '\u2018': "'", '\u2019': "'",  # Smart single quotes
+        '\u201c': '"', '\u201d': '"',  # Smart double quotes
+        '\u2013': '-', '\u2014': '-',  # Smart dashes
+        '\u2026': '...'                # Ellipsis
+    }
+    for orig, repl in replacements.items():
+        text = text.replace(orig, repl)
+        
+    # Final cleanup: forcing text to be compatible with Latin-1
+    # Any remaining weird characters (like emojis) become a '?'
+    return text.encode('latin-1', 'replace').decode('latin-1')
+
+
+
+
+
+
 def generate_pdf(data):
     pdf = PDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
     
-    # I. PERSONAL INFORMATION [Source: 2]
+    # I. PERSONAL INFORMATION
     pdf.set_font('Arial', 'B', 12)
     pdf.cell(0, 10, 'I. PERSONAL INFORMATION', 0, 1)
     
     pdf.set_font('Arial', '', 11)
+    # Notice we wrap everything in clean_text() now
     fields = [
-        ("Name of Student", data.get('Name', '')),
-        ("SIS ID", data.get('SIS ID', '')),
-        ("Email ID", data.get('Email', '')),
-        ("Year of Admission", data.get('Year', '')),
-        ("Contact Address", data.get('Address', '')),
-        ("Occupation of Father/Mother", data.get('Occupation', ''))
+        ("Name of Student", clean_text(data.get('Name', ''))),
+        ("SIS ID", clean_text(data.get('SIS ID', ''))),
+        ("Email ID", clean_text(data.get('Email', ''))),
+        ("Year of Admission", clean_text(data.get('Year', ''))),
+        ("Contact Address", clean_text(data.get('Address', ''))),
+        ("Occupation of Father/Mother", clean_text(data.get('Occupation', '')))
     ]
     
     for label, value in fields:
@@ -105,7 +137,7 @@ def generate_pdf(data):
 
     pdf.ln(5)
 
-    # II. ACADEMIC PERFORMANCE [Source: 9]
+    # II. ACADEMIC PERFORMANCE
     pdf.set_font('Arial', 'B', 12)
     pdf.cell(0, 10, 'II. ACADEMIC PERFORMANCE', 0, 1)
     
@@ -119,9 +151,9 @@ def generate_pdf(data):
     sems = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII']
     
     for sem in sems:
-        # Access using dynamic keys like Sem_I_Marks
-        mark = data.get(f'Sem_{sem}_Marks', '')
-        remark = data.get(f'Sem_{sem}_Remark', '')
+        # Wrap marks and remarks in clean_text too
+        mark = clean_text(data.get(f'Sem_{sem}_Marks', ''))
+        remark = clean_text(data.get(f'Sem_{sem}_Remark', ''))
         
         pdf.cell(40, 8, sem, 1, 0, 'C')
         pdf.cell(60, 8, str(mark), 1, 0, 'C')
@@ -129,16 +161,16 @@ def generate_pdf(data):
 
     pdf.ln(5)
 
-    # III. ACTIVITY & ACHIEVEMENT RECORD [Source: 11]
+    # III. ACTIVITY & ACHIEVEMENT RECORD
     pdf.set_font('Arial', 'B', 12)
     pdf.cell(0, 10, 'III. ACTIVITY & ACHIEVEMENT RECORD', 0, 1)
     
     activities = [
-        ("Participation in Extracurricular Activities", "(Sports, Cultural, NSS, etc.)", data.get('Extracurricular', '')),
-        ("Participation in Curricular Activities", "(Workshops, Seminars, Competitions, Hackathons)", data.get('Curricular', '')),
-        ("Certifications & Technical Skill Development", "(NPTEL, AWS, RedHat, Professional Courses, etc.)", data.get('Certifications', '')),
-        ("Internship & Placement Details", "(Company Name, Duration, Role)", data.get('Internship', '')),
-        ("Project Undertaken", "(Title, Domain, Guide Name)", data.get('Projects', ''))
+        ("Participation in Extracurricular Activities", "(Sports, Cultural, NSS, etc.)", clean_text(data.get('Extracurricular', ''))),
+        ("Participation in Curricular Activities", "(Workshops, Seminars, Competitions, Hackathons)", clean_text(data.get('Curricular', ''))),
+        ("Certifications & Technical Skill Development", "(NPTEL, AWS, RedHat, Professional Courses, etc.)", clean_text(data.get('Certifications', ''))),
+        ("Internship & Placement Details", "(Company Name, Duration, Role)", clean_text(data.get('Internship', ''))),
+        ("Project Undertaken", "(Title, Domain, Guide Name)", clean_text(data.get('Projects', '')))
     ]
 
     for title, subtitle, content in activities:
@@ -150,7 +182,7 @@ def generate_pdf(data):
         pdf.multi_cell(0, 6, str(content) + "\n", 'B') 
         pdf.ln(3)
 
-    return pdf.output(dest='S').encode('latin-1')
+    return pdf.output(dest='S').encode('latin-1', 'replace') # 'replace' handles any final stubborn errors
 
 # --- MAIN APP UI ---
 st.title("Student Profile Management System")
