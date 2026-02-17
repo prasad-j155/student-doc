@@ -110,16 +110,23 @@ def clean_text(text):
 
 
 def generate_pdf(data):
+    # 1. Create PDF with tighter margins (10mm instead of default)
     pdf = PDF()
+    pdf.set_margins(10, 10, 10) # Left, Top, Right
     pdf.add_page()
-    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.set_auto_page_break(auto=True, margin=5) # Bottom margin very small
     
-    # I. PERSONAL INFORMATION
+    # --- HEADER ---
+    # We don't need to call header() manually, FPDF does it, 
+    # but we can adjust the Y position to start higher up if needed.
+    
+    # --- I. PERSONAL INFORMATION ---
     pdf.set_font('Arial', 'B', 10)
-    pdf.cell(0, 10, 'I. PERSONAL INFORMATION', 0, 1)
+    pdf.cell(0, 6, 'I. PERSONAL INFORMATION', 0, 1) # Reduced height
     
     pdf.set_font('Arial', '', 9)
-    # Notice we wrap everything in clean_text() now
+    
+    # Data Mapping
     fields = [
         ("Name of Student", clean_text(data.get('Name', ''))),
         ("SIS ID", clean_text(data.get('SIS ID', ''))),
@@ -131,39 +138,44 @@ def generate_pdf(data):
     
     for label, value in fields:
         pdf.set_font('Arial', 'B', 9)
-        pdf.cell(60, 8, f"{label}:", 0, 0)
+        pdf.cell(50, 5, f"{label}:", 0, 0) # Width 50, Height 5
+        
         pdf.set_font('Arial', '', 9)
-        pdf.multi_cell(0, 8, str(value))
+        # Multi_cell is risky for single page if text is long, 
+        # but we use it with a short height to wrap tightly.
+        pdf.multi_cell(0, 5, str(value)) 
 
-    pdf.ln(5)
+    pdf.ln(2) # Small gap between sections
 
-    # II. ACADEMIC PERFORMANCE
+    # --- II. ACADEMIC PERFORMANCE ---
     pdf.set_font('Arial', 'B', 10)
-    pdf.cell(0, 10, 'II. ACADEMIC PERFORMANCE', 0, 1)
+    pdf.cell(0, 6, 'II. ACADEMIC PERFORMANCE', 0, 1)
     
+    # Table Header
     pdf.set_font('Arial', 'B', 8)
     pdf.set_fill_color(240, 240, 240)
-    pdf.cell(40, 10, 'Semester', 1, 0, 'C', 1)
-    pdf.cell(60, 10, '% Marks / SGPA', 1, 0, 'C', 1)
-    pdf.cell(90, 10, 'Remark', 1, 1, 'C', 1)
+    pdf.cell(30, 6, 'Semester', 1, 0, 'C', 1) # Width reduced slightly
+    pdf.cell(50, 6, '% Marks / SGPA', 1, 0, 'C', 1)
+    pdf.cell(0, 6, 'Remark', 1, 1, 'C', 1) # 0 means "rest of the line"
     
+    # Table Rows
     pdf.set_font('Arial', '', 8)
     sems = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII']
     
     for sem in sems:
-        # Wrap marks and remarks in clean_text too
         mark = clean_text(data.get(f'Sem_{sem}_Marks', ''))
         remark = clean_text(data.get(f'Sem_{sem}_Remark', ''))
         
-        pdf.cell(40, 8, sem, 1, 0, 'C')
-        pdf.cell(60, 8, str(mark), 1, 0, 'C')
-        pdf.cell(90, 8, str(remark), 1, 1, 'L')
+        # Very compact rows (Height 5)
+        pdf.cell(30, 5, sem, 1, 0, 'C')
+        pdf.cell(50, 5, str(mark), 1, 0, 'C')
+        pdf.cell(0, 5, str(remark), 1, 1, 'L')
 
-    pdf.ln(5)
+    pdf.ln(2)
 
-    # III. ACTIVITY & ACHIEVEMENT RECORD
+    # --- III. ACTIVITY & ACHIEVEMENT RECORD ---
     pdf.set_font('Arial', 'B', 10)
-    pdf.cell(0, 10, 'III. ACTIVITY & ACHIEVEMENT RECORD', 0, 1)
+    pdf.cell(0, 6, 'III. ACTIVITY & ACHIEVEMENT RECORD', 0, 1)
     
     activities = [
         ("Participation in Extracurricular Activities", "(Sports, Cultural, NSS, etc.)", clean_text(data.get('Extracurricular', ''))),
@@ -174,15 +186,23 @@ def generate_pdf(data):
     ]
 
     for title, subtitle, content in activities:
+        # Title
         pdf.set_font('Arial', 'B', 9)
-        pdf.cell(0, 6, title, 0, 1)
+        pdf.cell(0, 5, title, 0, 1)
+        
+        # Subtitle (very small)
         pdf.set_font('Arial', 'I', 7)
-        pdf.cell(0, 5, subtitle, 0, 1)
+        pdf.cell(0, 3, subtitle, 0, 1) # Height 3
+        
+        # Content
         pdf.set_font('Arial', '', 8)
-        pdf.multi_cell(0, 6, str(content) + "\n", 'B') 
-        pdf.ln(3)
+        # Check if content is empty to save space
+        display_content = str(content) if content else " "
+        pdf.multi_cell(0, 5, display_content, 'B') # Border Bottom only
+        
+        pdf.ln(1) # Tiny gap between activities
 
-    return pdf.output(dest='S').encode('latin-1', 'replace') # 'replace' handles any final stubborn errors
+    return pdf.output(dest='S').encode('latin-1', 'replace')
 
 # --- MAIN APP UI ---
 st.title("Student Profile Management System")
